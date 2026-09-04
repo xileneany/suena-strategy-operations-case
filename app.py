@@ -1449,12 +1449,614 @@ def scenario_analysis():
 
     page_header(
         "Scenario Analysis",
-        "Downside • Base case • Upside • Revenue sensitivity"
+        "Revenue sensitivity • Target coverage • Pipeline requirements • Decision support"
     )
 
-    st.info(
-        "Scenario Analysis will be developed in Step 8."
+    case_disclaimer()
+
+    st.markdown(
+        """
+This model explores a management question:
+
+**How resilient is the current commercial pipeline under different assumptions,
+and what additional pipeline would be required to support a revenue target?**
+"""
     )
+
+    st.caption(
+        "All targets and scenario assumptions are illustrative. "
+        "They do not represent suena energy's actual revenue targets, "
+        "forecast methodology, or internal commercial expectations."
+    )
+
+    # --------------------------------------------------
+    # CURRENT PIPELINE BASELINE
+    # --------------------------------------------------
+
+    active = df[
+        df["stage"] != "Won"
+    ].copy()
+
+    current_pipeline = active["deal_value"].sum()
+    current_weighted = active["weighted_value"].sum()
+
+    avg_probability = (
+        active["probability"].mean()
+        if not active.empty
+        else 0
+    )
+
+    avg_deal = (
+        active["deal_value"].mean()
+        if not active.empty
+        else 0
+    )
+
+    # --------------------------------------------------
+    # MODEL ASSUMPTIONS
+    # --------------------------------------------------
+
+    st.divider()
+    st.subheader("Scenario Assumptions")
+
+    st.markdown(
+        """
+Adjust the target and commercial assumptions below to test how changes in
+pipeline creation and probability affect expected revenue coverage.
+"""
+    )
+
+    a1, a2, a3 = st.columns(3)
+
+    with a1:
+        revenue_target = st.number_input(
+            "Illustrative Revenue Target (€)",
+            min_value=500000,
+            max_value=10000000,
+            value=3000000,
+            step=100000
+        )
+
+    with a2:
+        pipeline_growth = st.slider(
+            "Base Pipeline Growth (%)",
+            min_value=-30,
+            max_value=100,
+            value=10,
+            step=5
+        )
+
+    with a3:
+        probability_adjustment = st.slider(
+            "Base Probability Adjustment (pp)",
+            min_value=-20,
+            max_value=20,
+            value=0,
+            step=5
+        )
+
+    st.caption(
+        "Probability adjustments are expressed in percentage points (pp), "
+        "not percentage growth."
+    )
+
+    # --------------------------------------------------
+    # SCENARIO DEFINITIONS
+    # --------------------------------------------------
+
+    scenarios = pd.DataFrame(
+        {
+            "Scenario": [
+                "Downside",
+                "Base Case",
+                "Upside"
+            ],
+            "Pipeline Growth (%)": [
+                pipeline_growth - 15,
+                pipeline_growth,
+                pipeline_growth + 20
+            ],
+            "Probability Adjustment (pp)": [
+                probability_adjustment - 10,
+                probability_adjustment,
+                probability_adjustment + 10
+            ]
+        }
+    )
+
+    # --------------------------------------------------
+    # SCENARIO CALCULATIONS
+    # --------------------------------------------------
+
+    scenario_results = []
+
+    for _, row in scenarios.iterrows():
+
+        growth_factor = (
+            1 + row["Pipeline Growth (%)"] / 100
+        )
+
+        adjusted_pipeline = (
+            current_pipeline * growth_factor
+        )
+
+        adjusted_probability = (
+            avg_probability
+            + row["Probability Adjustment (pp)"] / 100
+        )
+
+        adjusted_probability = max(
+            0,
+            min(
+                adjusted_probability,
+                1
+            )
+        )
+
+        projected_weighted_revenue = (
+            adjusted_pipeline
+            * adjusted_probability
+        )
+
+        revenue_gap = (
+            projected_weighted_revenue
+            - revenue_target
+        )
+
+        target_coverage = (
+            projected_weighted_revenue
+            / revenue_target
+            * 100
+            if revenue_target > 0
+            else 0
+        )
+
+        additional_weighted_required = max(
+            0,
+            revenue_target
+            - projected_weighted_revenue
+        )
+
+        if adjusted_probability > 0:
+            additional_gross_pipeline = (
+                additional_weighted_required
+                / adjusted_probability
+            )
+        else:
+            additional_gross_pipeline = 0
+
+        scenario_results.append(
+            {
+                "Scenario": row["Scenario"],
+                "Pipeline Growth (%)": row["Pipeline Growth (%)"],
+                "Probability Adjustment (pp)": row[
+                    "Probability Adjustment (pp)"
+                ],
+                "Adjusted Pipeline": adjusted_pipeline,
+                "Adjusted Probability": adjusted_probability,
+                "Projected Weighted Revenue": projected_weighted_revenue,
+                "Revenue Gap": revenue_gap,
+                "Target Coverage": target_coverage,
+                "Additional Pipeline Required": additional_gross_pipeline
+            }
+        )
+
+    results = pd.DataFrame(
+        scenario_results
+    )
+
+    # --------------------------------------------------
+    # BASELINE
+    # --------------------------------------------------
+
+    st.divider()
+    st.subheader("Current Commercial Baseline")
+
+    b1, b2, b3, b4 = st.columns(4)
+
+    b1.metric(
+        "Active Pipeline",
+        euro_m(current_pipeline)
+    )
+
+    b2.metric(
+        "Current Weighted Value",
+        euro_m(current_weighted)
+    )
+
+    b3.metric(
+        "Average Probability",
+        f"{avg_probability * 100:.1f}%"
+    )
+
+    b4.metric(
+        "Average Deal Size",
+        euro_k(avg_deal)
+    )
+
+    # --------------------------------------------------
+    # SCENARIO OUTPUT
+    # --------------------------------------------------
+
+    st.divider()
+    st.subheader("Scenario Outcomes")
+
+    downside = results[
+        results["Scenario"] == "Downside"
+    ].iloc[0]
+
+    base = results[
+        results["Scenario"] == "Base Case"
+    ].iloc[0]
+
+    upside = results[
+        results["Scenario"] == "Upside"
+    ].iloc[0]
+
+    s1, s2, s3 = st.columns(3)
+
+    with s1:
+
+        st.markdown("### Downside")
+
+        st.metric(
+            "Projected Weighted Revenue",
+            euro_m(
+                downside[
+                    "Projected Weighted Revenue"
+                ]
+            )
+        )
+
+        st.metric(
+            "Target Coverage",
+            f"{downside['Target Coverage']:.1f}%"
+        )
+
+    with s2:
+
+        st.markdown("### Base Case")
+
+        st.metric(
+            "Projected Weighted Revenue",
+            euro_m(
+                base[
+                    "Projected Weighted Revenue"
+                ]
+            )
+        )
+
+        st.metric(
+            "Target Coverage",
+            f"{base['Target Coverage']:.1f}%"
+        )
+
+    with s3:
+
+        st.markdown("### Upside")
+
+        st.metric(
+            "Projected Weighted Revenue",
+            euro_m(
+                upside[
+                    "Projected Weighted Revenue"
+                ]
+            )
+        )
+
+        st.metric(
+            "Target Coverage",
+            f"{upside['Target Coverage']:.1f}%"
+        )
+
+    # --------------------------------------------------
+    # TARGET COVERAGE CHART
+    # --------------------------------------------------
+
+    st.subheader("Revenue Target Coverage")
+
+    coverage_chart = results.copy()
+
+    fig_coverage = px.bar(
+        coverage_chart,
+        x="Scenario",
+        y="Target Coverage",
+        text="Target Coverage",
+        category_orders={
+            "Scenario": [
+                "Downside",
+                "Base Case",
+                "Upside"
+            ]
+        },
+        labels={
+            "Target Coverage": "Target Coverage (%)"
+        }
+    )
+
+    fig_coverage.update_traces(
+        marker_color=SOFT_ORANGE,
+        texttemplate="%{text:.1f}%",
+        textposition="outside"
+    )
+
+    fig_coverage.update_layout(
+        paper_bgcolor=CHARCOAL,
+        plot_bgcolor=CHARCOAL,
+        font_color=OFF_WHITE,
+        showlegend=False,
+        margin=dict(
+            l=20,
+            r=20,
+            t=30,
+            b=20
+        ),
+        yaxis=dict(
+            gridcolor=BORDER,
+            zeroline=False
+        ),
+        xaxis=dict(
+            showgrid=False
+        )
+    )
+
+    st.plotly_chart(
+        fig_coverage,
+        use_container_width=True
+    )
+
+    # --------------------------------------------------
+    # TARGET GAP
+    # --------------------------------------------------
+
+    st.divider()
+    st.subheader("Target Gap & Pipeline Requirement")
+
+    target_table = results[
+        [
+            "Scenario",
+            "Projected Weighted Revenue",
+            "Revenue Gap",
+            "Target Coverage",
+            "Additional Pipeline Required"
+        ]
+    ].copy()
+
+    target_table[
+        "Projected Weighted Revenue"
+    ] = target_table[
+        "Projected Weighted Revenue"
+    ].round(0)
+
+    target_table[
+        "Revenue Gap"
+    ] = target_table[
+        "Revenue Gap"
+    ].round(0)
+
+    target_table[
+        "Target Coverage"
+    ] = target_table[
+        "Target Coverage"
+    ].round(1)
+
+    target_table[
+        "Additional Pipeline Required"
+    ] = target_table[
+        "Additional Pipeline Required"
+    ].round(0)
+
+    target_table.columns = [
+        "Scenario",
+        "Projected Weighted Revenue (€)",
+        "Gap vs Target (€)",
+        "Target Coverage (%)",
+        "Additional Gross Pipeline Required (€)"
+    ]
+
+    st.dataframe(
+        target_table,
+        use_container_width=True,
+        hide_index=True
+    )
+
+    # --------------------------------------------------
+    # BASE CASE MANAGEMENT VIEW
+    # --------------------------------------------------
+
+    st.divider()
+    st.subheader("Base Case Decision Support")
+
+    base_revenue = base[
+        "Projected Weighted Revenue"
+    ]
+
+    base_gap = base[
+        "Revenue Gap"
+    ]
+
+    base_coverage = base[
+        "Target Coverage"
+    ]
+
+    base_additional_pipeline = base[
+        "Additional Pipeline Required"
+    ]
+
+    d1, d2, d3 = st.columns(3)
+
+    d1.metric(
+        "Projected Revenue",
+        euro_m(base_revenue)
+    )
+
+    d2.metric(
+        "Gap vs Target",
+        (
+            f"+{euro_k(base_gap)}"
+            if base_gap >= 0
+            else f"-{euro_k(abs(base_gap))}"
+        )
+    )
+
+    d3.metric(
+        "Additional Pipeline Needed",
+        (
+            euro_m(base_additional_pipeline)
+            if base_additional_pipeline > 0
+            else "€0"
+        )
+    )
+
+    # --------------------------------------------------
+    # MANAGEMENT INTERPRETATION
+    # --------------------------------------------------
+
+    st.subheader("Management Interpretation")
+
+    if base_coverage >= 100:
+
+        st.success(
+            f"Under the current Base Case assumptions, projected weighted "
+            f"revenue covers approximately {base_coverage:.1f}% of the "
+            "illustrative target."
+        )
+
+        st.markdown(
+            """
+**Management implication**
+
+The target appears supported under the Base Case assumptions. The priority
+should therefore shift from pure pipeline creation toward protecting the
+quality and progression of the existing pipeline.
+
+Recommended focus:
+
+- validate probability assumptions on the largest opportunities;
+- protect late-stage opportunities from slippage;
+- monitor concentration risk by market and deal;
+- maintain pipeline creation as protection against downside.
+"""
+        )
+
+    else:
+
+        st.warning(
+            f"Under the current Base Case assumptions, projected weighted "
+            f"revenue covers approximately {base_coverage:.1f}% of the "
+            "illustrative target."
+        )
+
+        st.markdown(
+            f"""
+**Management implication**
+
+The current Base Case does not fully support the illustrative target.
+
+At the current adjusted probability, approximately
+**{euro_m(base_additional_pipeline)} in additional gross pipeline**
+would be required to close the expected revenue gap.
+
+This creates three potential management levers:
+
+1. **Pipeline creation** — generate additional qualified commercial opportunities.
+2. **Pipeline progression** — improve the expected value of existing opportunities.
+3. **Target / forecast reassessment** — test whether the assumptions supporting
+   the commercial plan remain realistic.
+"""
+        )
+
+    # --------------------------------------------------
+    # SENSITIVITY
+    # --------------------------------------------------
+
+    st.divider()
+    st.subheader("Sensitivity View")
+
+    st.markdown(
+        """
+The scenario model separates two commercial levers:
+
+**Pipeline volume** determines how much gross commercial opportunity exists.
+
+**Probability** determines how much of that pipeline contributes to expected
+weighted revenue.
+
+This distinction matters because the same revenue gap can require different
+management actions depending on whether the underlying issue is insufficient
+pipeline creation or weak expected conversion.
+"""
+    )
+
+    fig_sensitivity = px.scatter(
+        results,
+        x="Adjusted Pipeline",
+        y="Projected Weighted Revenue",
+        text="Scenario",
+        size="Target Coverage",
+        labels={
+            "Adjusted Pipeline": "Adjusted Pipeline (€)",
+            "Projected Weighted Revenue": "Projected Weighted Revenue (€)"
+        }
+    )
+
+    fig_sensitivity.update_traces(
+        marker=dict(
+            color=SOFT_ORANGE,
+            line=dict(
+                color=BORDER,
+                width=1
+            )
+        ),
+        textposition="top center"
+    )
+
+    style_chart(
+        fig_sensitivity
+    )
+
+    st.plotly_chart(
+        fig_sensitivity,
+        use_container_width=True
+    )
+
+    # --------------------------------------------------
+    # METHODOLOGY
+    # --------------------------------------------------
+
+    with st.expander("Methodology & limitations"):
+
+        st.markdown(
+            """
+**Model logic**
+
+The scenario model begins with the  active pipeline and applies two changes:
+
+1. a change in gross pipeline volume; and
+2. an adjustment to the average pipeline probability.
+
+Projected weighted revenue is then calculated as:
+
+**Adjusted Pipeline × Adjusted Average Probability**
+
+If projected weighted revenue is below the illustrative revenue target, the
+model estimates the additional gross pipeline required at the scenario's
+adjusted probability.
+
+**Important limitation**
+
+This is a simplified management scenario model, not a financial forecast.
+
+A production revenue forecast would normally require opportunity-level timing,
+historical conversion rates, sales-cycle behavior, contract economics, revenue
+recognition assumptions, and other commercial information that is not
+available in this synthetic case study.
+
+The purpose here is to demonstrate structured scenario thinking 
+rather than to reproduce suena energy's forecasting
+methodology.
+"""
+        )
 
     footer()
 
