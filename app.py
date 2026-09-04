@@ -26,25 +26,30 @@ OFF_WHITE = "#F2F2F0"
 MUTED_TEXT = "#A9ADB3"
 BORDER = "#30343A"
 
+STAGE_ORDER = [
+    "Qualified",
+    "Technical Evaluation",
+    "Proposal",
+    "Negotiation",
+    "Won"
+]
+
 
 st.markdown(
     f"""
     <style>
 
-    /* Main application */
     .stApp {{
         background-color: {CHARCOAL};
         color: {OFF_WHITE};
     }}
 
-    /* Main content */
     .block-container {{
         padding-top: 2.5rem;
         padding-bottom: 4rem;
         max-width: 1450px;
     }}
 
-    /* Sidebar */
     [data-testid="stSidebar"] {{
         background-color: {GRAPHITE};
         border-right: 1px solid {BORDER};
@@ -54,7 +59,6 @@ st.markdown(
         color: {OFF_WHITE};
     }}
 
-    /* Main headings */
     h1 {{
         color: {OFF_WHITE} !important;
         font-weight: 700 !important;
@@ -71,7 +75,6 @@ st.markdown(
         color: {SOFT_ORANGE} !important;
     }}
 
-    /* KPI cards */
     [data-testid="stMetric"] {{
         background-color: {GRAPHITE};
         border: 1px solid {BORDER};
@@ -89,30 +92,25 @@ st.markdown(
         color: {MUTED_TEXT};
     }}
 
-    /* Dividers */
     hr {{
         border-color: {BORDER} !important;
     }}
 
-    /* Alerts */
     [data-testid="stAlert"] {{
         background-color: {GRAPHITE};
         border: 1px solid {BORDER};
         color: {OFF_WHITE};
     }}
 
-    /* Dataframe */
     [data-testid="stDataFrame"] {{
         border: 1px solid {BORDER};
         border-radius: 8px;
     }}
 
-    /* Captions */
     .stCaption {{
         color: {MUTED_TEXT} !important;
     }}
 
-    /* Links */
     a {{
         color: {SOFT_ORANGE} !important;
     }}
@@ -124,17 +122,13 @@ st.markdown(
 
 
 # ==================================================
-# LOAD DATA
+# DATA
 # ==================================================
 
 @st.cache_data
 def load_data():
     df = pd.read_csv("data/pipeline.csv")
-
-    df["weighted_value"] = (
-        df["deal_value"] * df["probability"]
-    )
-
+    df["weighted_value"] = df["deal_value"] * df["probability"]
     return df
 
 
@@ -142,187 +136,227 @@ df = load_data()
 
 
 # ==================================================
-# HEADER
+# HELPERS
 # ==================================================
 
-st.title("CCO Strategy & Operations Dashboard")
-
-st.markdown(
-    f"""
-    <div style="
-        width: 75px;
-        height: 4px;
-        background-color: {SOFT_ORANGE};
-        border-radius: 4px;
-        margin-top: -12px;
-        margin-bottom: 22px;
-    ">
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+def euro_m(value):
+    return f"€{value / 1_000_000:.2f}M"
 
 
-st.caption(
-    "Independent case study for suena energy | "
-    "Revenue Operations • Commercial Insights • Decision Support"
-)
+def euro_k(value):
+    return f"€{value / 1_000:.0f}K"
 
 
-st.markdown(
-    f"""
-    <div style="
-        background-color: {GRAPHITE};
-        border: 1px solid {BORDER};
-        border-left: 4px solid {SOFT_ORANGE};
-        padding: 14px 18px;
-        border-radius: 7px;
-        color: {MUTED_TEXT};
-        font-size: 0.9rem;
-        margin: 18px 0 30px 0;
-    ">
-        <strong style="color:{OFF_WHITE};">
-            Independent case study
-        </strong>
-        &nbsp;•&nbsp;
-        All commercial figures are synthetic and used solely to demonstrate
-        analytical and decision-support capabilities. No internal suena energy
-        data is used.
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+def style_chart(fig):
+    fig.update_layout(
+        paper_bgcolor=CHARCOAL,
+        plot_bgcolor=CHARCOAL,
+        font_color=OFF_WHITE,
+        margin=dict(l=20, r=20, t=30, b=20),
+        xaxis=dict(
+            showgrid=False,
+            linecolor=BORDER
+        ),
+        yaxis=dict(
+            gridcolor=BORDER,
+            zeroline=False
+        )
+    )
+    return fig
 
 
-# ==================================================
-# SIDEBAR FILTERS
-# ==================================================
-
-st.sidebar.header("Pipeline Filters")
-
-
-markets = st.sidebar.multiselect(
-    "Market",
-    options=df["market"].unique(),
-    default=list(df["market"].unique())
-)
-
-
-stages = st.sidebar.multiselect(
-    "Pipeline Stage",
-    options=df["stage"].unique(),
-    default=list(df["stage"].unique())
-)
-
-
-filtered = df[
-    (df["market"].isin(markets))
-    & (df["stage"].isin(stages))
-]
-
-
-# ==================================================
-# EXECUTIVE KPIs
-# ==================================================
-
-st.subheader("Executive Overview")
-
-
-total_pipeline = filtered["deal_value"].sum()
-
-weighted_pipeline = filtered["weighted_value"].sum()
-
-total_mw = filtered["mw"].sum()
-
-avg_deal = (
-    filtered["deal_value"].mean()
-    if not filtered.empty
-    else 0
-)
-
-won_deals = len(
-    filtered[
-        filtered["stage"] == "Won"
-    ]
-)
-
-total_opportunities = len(filtered)
-
-
-c1, c2, c3, c4, c5 = st.columns(5)
-
-
-c1.metric(
-    "Total Pipeline",
-    f"€{total_pipeline / 1_000_000:.2f}M"
-)
-
-
-c2.metric(
-    "Weighted Pipeline",
-    f"€{weighted_pipeline / 1_000_000:.2f}M"
-)
-
-
-c3.metric(
-    "Assets in Pipeline",
-    f"{total_mw:,.0f} MW"
-)
-
-
-c4.metric(
-    "Average Deal Size",
-    f"€{avg_deal / 1_000:.0f}K"
-)
-
-
-c5.metric(
-    "Won / Opportunities",
-    f"{won_deals} / {total_opportunities}"
-)
-
-
-# ==================================================
-# CCO BRIEF
-# ==================================================
-
-st.divider()
-
-st.subheader("CCO Brief")
-
-
-market_pipeline = (
-    filtered
-    .groupby("market")["deal_value"]
-    .sum()
-    .sort_values(ascending=False)
-)
-
-
-stalled = filtered[
-    (filtered["days_in_stage"] >= 30)
-    & (filtered["stage"] != "Won")
-].copy()
-
-
-stalled_weighted_value = (
-    stalled["weighted_value"].sum()
-)
-
-
-if not market_pipeline.empty:
-
-    largest_market = market_pipeline.index[0]
+def page_header(title, subtitle):
+    st.title(title)
 
     st.markdown(
         f"""
+        <div style="
+            width: 75px;
+            height: 4px;
+            background-color: {SOFT_ORANGE};
+            border-radius: 4px;
+            margin-top: -12px;
+            margin-bottom: 22px;
+        ">
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.caption(subtitle)
+
+
+def case_disclaimer():
+    st.markdown(
+        f"""
+        <div style="
+            background-color: {GRAPHITE};
+            border: 1px solid {BORDER};
+            border-left: 4px solid {SOFT_ORANGE};
+            padding: 14px 18px;
+            border-radius: 7px;
+            color: {MUTED_TEXT};
+            font-size: 0.9rem;
+            margin: 18px 0 30px 0;
+        ">
+            <strong style="color:{OFF_WHITE};">
+                Independent case study
+            </strong>
+            &nbsp;•&nbsp;
+            All commercial figures are synthetic and used solely to demonstrate
+            analytical and decision-support capabilities. No internal suena energy
+            data is used.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+
+def footer():
+    st.divider()
+    st.caption(
+        "Independent Strategy & Operations case study • "
+        "Synthetic dataset • Built by Xilene Siquero"
+    )
+
+
+def pipeline_filters(data, key_prefix):
+    st.sidebar.markdown("### Filters")
+
+    markets = st.sidebar.multiselect(
+        "Market",
+        options=list(data["market"].unique()),
+        default=list(data["market"].unique()),
+        key=f"{key_prefix}_markets"
+    )
+
+    stages = st.sidebar.multiselect(
+        "Pipeline Stage",
+        options=STAGE_ORDER,
+        default=STAGE_ORDER,
+        key=f"{key_prefix}_stages"
+    )
+
+    filtered = data[
+        (data["market"].isin(markets))
+        & (data["stage"].isin(stages))
+    ].copy()
+
+    return filtered
+
+
+# ==================================================
+# NAVIGATION
+# ==================================================
+
+st.sidebar.markdown("### Strategy & Operations")
+
+page = st.sidebar.radio(
+    "Navigate",
+    [
+        "Executive Overview",
+        "Revenue & Pipeline",
+        "Market Expansion",
+        "Scenario Analysis",
+        "Board Brief",
+        "About This Case"
+    ],
+    label_visibility="collapsed"
+)
+
+st.sidebar.divider()
+
+
+# ==================================================
+# EXECUTIVE OVERVIEW
+# ==================================================
+
+def executive_overview():
+
+    page_header(
+        "CCO Strategy & Operations Dashboard",
+        "Revenue Operations • Commercial Insights • Decision Support"
+    )
+
+    case_disclaimer()
+
+    filtered = pipeline_filters(df, "overview")
+
+    st.subheader("Executive Overview")
+
+    total_pipeline = filtered["deal_value"].sum()
+    weighted_pipeline = filtered["weighted_value"].sum()
+    total_mw = filtered["mw"].sum()
+
+    avg_deal = (
+        filtered["deal_value"].mean()
+        if not filtered.empty
+        else 0
+    )
+
+    won_deals = len(
+        filtered[filtered["stage"] == "Won"]
+    )
+
+    total_opportunities = len(filtered)
+
+    c1, c2, c3, c4, c5 = st.columns(5)
+
+    c1.metric(
+        "Total Pipeline",
+        euro_m(total_pipeline)
+    )
+
+    c2.metric(
+        "Weighted Pipeline",
+        euro_m(weighted_pipeline)
+    )
+
+    c3.metric(
+        "Assets in Pipeline",
+        f"{total_mw:,.0f} MW"
+    )
+
+    c4.metric(
+        "Average Deal Size",
+        euro_k(avg_deal)
+    )
+
+    c5.metric(
+        "Won / Opportunities",
+        f"{won_deals} / {total_opportunities}"
+    )
+
+    st.divider()
+    st.subheader("CCO Brief")
+
+    market_pipeline = (
+        filtered
+        .groupby("market")["deal_value"]
+        .sum()
+        .sort_values(ascending=False)
+    )
+
+    stalled = filtered[
+        (filtered["days_in_stage"] >= 30)
+        & (filtered["stage"] != "Won")
+    ].copy()
+
+    stalled_weighted = stalled["weighted_value"].sum()
+
+    if not market_pipeline.empty:
+
+        largest_market = market_pipeline.index[0]
+
+        st.markdown(
+            f"""
 ### What matters
 
 **{largest_market} currently represents the largest source of pipeline value.**
 
 At the same time, **{len(stalled)} opportunities** have spent 30 or more
 days in their current pipeline stage, representing approximately
-**€{stalled_weighted_value:,.0f} in weighted pipeline**.
+**{euro_k(stalled_weighted)} in weighted pipeline**.
 
 ### Management question
 
@@ -335,232 +369,149 @@ or internal execution?
 Review every opportunity with **30+ days in stage** during the next
 pipeline meeting and assign a clear blocker, owner, and next action.
 """
-    )
-
-else:
-
-    st.write(
-        "Select at least one market and pipeline stage "
-        "to display the executive analysis."
-    )
-
-
-# ==================================================
-# COMMERCIAL PERFORMANCE
-# ==================================================
-
-st.divider()
-
-st.subheader("Commercial Performance")
-
-
-left, right = st.columns(2)
-
-
-# --------------------------------------------------
-# PIPELINE BY MARKET
-# --------------------------------------------------
-
-with left:
-
-    st.markdown("#### Pipeline by Market")
-
-    market_chart = (
-        filtered
-        .groupby(
-            "market",
-            as_index=False
-        )["deal_value"]
-        .sum()
-        .sort_values(
-            "deal_value",
-            ascending=False
         )
-    )
 
-    fig_market = px.bar(
-        market_chart,
-        x="market",
-        y="deal_value",
-        labels={
-            "market": "Market",
-            "deal_value": "Pipeline Value (€)"
-        }
-    )
-
-    fig_market.update_traces(
-        marker_color=SOFT_ORANGE
-    )
-
-    fig_market.update_layout(
-        paper_bgcolor=CHARCOAL,
-        plot_bgcolor=CHARCOAL,
-        font_color=OFF_WHITE,
-        showlegend=False,
-        margin=dict(
-            l=20,
-            r=20,
-            t=20,
-            b=20
-        ),
-        xaxis=dict(
-            showgrid=False,
-            linecolor=BORDER
-        ),
-        yaxis=dict(
-            gridcolor=BORDER,
-            zeroline=False
+    else:
+        st.write(
+            "Select at least one market and stage "
+            "to display the executive analysis."
         )
-    )
 
-    st.plotly_chart(
-        fig_market,
-        use_container_width=True
-    )
+    st.divider()
+    st.subheader("Commercial Performance")
 
+    left, right = st.columns(2)
 
-# --------------------------------------------------
-# PIPELINE BY STAGE
-# --------------------------------------------------
+    with left:
 
-with right:
+        st.markdown("#### Pipeline by Market")
 
-    st.markdown("#### Pipeline by Stage")
-
-    stage_chart = (
-        filtered
-        .groupby(
-            "stage",
-            as_index=False
-        )["deal_value"]
-        .sum()
-    )
-
-    fig_stage = px.bar(
-        stage_chart,
-        x="stage",
-        y="deal_value",
-        labels={
-            "stage": "Pipeline Stage",
-            "deal_value": "Pipeline Value (€)"
-        }
-    )
-
-    fig_stage.update_traces(
-        marker_color=MUTED_ORANGE
-    )
-
-    fig_stage.update_layout(
-        paper_bgcolor=CHARCOAL,
-        plot_bgcolor=CHARCOAL,
-        font_color=OFF_WHITE,
-        showlegend=False,
-        margin=dict(
-            l=20,
-            r=20,
-            t=20,
-            b=20
-        ),
-        xaxis=dict(
-            showgrid=False,
-            linecolor=BORDER
-        ),
-        yaxis=dict(
-            gridcolor=BORDER,
-            zeroline=False
+        market_chart = (
+            filtered
+            .groupby("market", as_index=False)["deal_value"]
+            .sum()
+            .sort_values("deal_value", ascending=False)
         )
-    )
 
-    st.plotly_chart(
-        fig_stage,
-        use_container_width=True
-    )
+        fig_market = px.bar(
+            market_chart,
+            x="market",
+            y="deal_value",
+            labels={
+                "market": "Market",
+                "deal_value": "Pipeline Value (€)"
+            }
+        )
 
+        fig_market.update_traces(
+            marker_color=SOFT_ORANGE
+        )
 
-# ==================================================
-# PIPELINE ATTENTION
-# ==================================================
+        style_chart(fig_market)
 
-st.divider()
+        st.plotly_chart(
+            fig_market,
+            use_container_width=True
+        )
 
-st.subheader("Pipeline Attention Required")
+    with right:
 
+        st.markdown("#### Pipeline by Stage")
 
-risk_df = filtered[
-    (filtered["days_in_stage"] >= 30)
-    & (filtered["stage"] != "Won")
-].copy()
+        stage_chart = (
+            filtered
+            .groupby("stage", as_index=False)["deal_value"]
+            .sum()
+        )
 
+        fig_stage = px.bar(
+            stage_chart,
+            x="stage",
+            y="deal_value",
+            category_orders={"stage": STAGE_ORDER},
+            labels={
+                "stage": "Pipeline Stage",
+                "deal_value": "Pipeline Value (€)"
+            }
+        )
 
-if not risk_df.empty:
+        fig_stage.update_traces(
+            marker_color=MUTED_ORANGE
+        )
 
-    risk_df["Probability"] = (
-        risk_df["probability"]
-        * 100
-    ).round(0).astype(int).astype(str) + "%"
+        style_chart(fig_stage)
 
-    display_risk = risk_df[
-        [
-            "opportunity",
-            "market",
-            "stage",
-            "deal_value",
-            "Probability",
-            "mw",
-            "days_in_stage"
-        ]
+        st.plotly_chart(
+            fig_stage,
+            use_container_width=True
+        )
+
+    st.divider()
+    st.subheader("Pipeline Attention Required")
+
+    risk_df = filtered[
+        (filtered["days_in_stage"] >= 30)
+        & (filtered["stage"] != "Won")
     ].copy()
 
-    display_risk.columns = [
-        "Opportunity",
-        "Market",
-        "Stage",
-        "Deal Value (€)",
-        "Probability",
-        "MW",
-        "Days in Stage"
-    ]
+    if not risk_df.empty:
 
-    st.dataframe(
-        display_risk,
-        use_container_width=True,
-        hide_index=True
+        display_risk = risk_df[
+            [
+                "opportunity",
+                "market",
+                "stage",
+                "deal_value",
+                "probability",
+                "mw",
+                "days_in_stage"
+            ]
+        ].copy()
+
+        display_risk["probability"] = (
+            display_risk["probability"] * 100
+        ).round(0).astype(int).astype(str) + "%"
+
+        display_risk.columns = [
+            "Opportunity",
+            "Market",
+            "Stage",
+            "Deal Value (€)",
+            "Probability",
+            "MW",
+            "Days in Stage"
+        ]
+
+        st.dataframe(
+            display_risk,
+            use_container_width=True,
+            hide_index=True
+        )
+
+    else:
+        st.success(
+            "No opportunities currently exceed "
+            "the 30-day attention threshold."
+        )
+
+    st.divider()
+    st.subheader("Decision Support")
+
+    risk_value = (
+        risk_df["weighted_value"].sum()
+        if not risk_df.empty
+        else 0
     )
 
-else:
+    if risk_value > 0:
+        st.warning(
+            f"{euro_k(risk_value)} of weighted pipeline is currently "
+            "tied to opportunities that have spent 30+ days "
+            "in their current stage."
+        )
 
-    st.success(
-        "No opportunities currently exceed "
-        "the 30-day attention threshold."
-    )
-
-
-# ==================================================
-# DECISION SUPPORT
-# ==================================================
-
-st.divider()
-
-st.subheader("Decision Support")
-
-
-risk_value = (
-    risk_df["weighted_value"].sum()
-    if not risk_df.empty
-    else 0
-)
-
-
-if risk_value > 0:
-
-    st.warning(
-        f"€{risk_value:,.0f} of weighted pipeline is currently tied "
-        "to opportunities that have spent 30+ days in their current stage."
-    )
-
-
-st.markdown(
-    """
+    st.markdown(
+        """
 **Suggested next steps**
 
 1. Identify the primary blocker for each stalled opportunity.
@@ -569,17 +520,539 @@ st.markdown(
 4. Reassess whether current forecast probabilities remain realistic.
 5. Escalate material revenue risks during the next CCO pipeline review.
 """
-)
+    )
+
+    footer()
 
 
 # ==================================================
-# FOOTER
+# REVENUE & PIPELINE
 # ==================================================
 
-st.divider()
+def revenue_pipeline():
+
+    page_header(
+        "Revenue & Pipeline",
+        "Pipeline health • Stage ageing • Forecast exposure • Commercial priorities"
+    )
+
+    case_disclaimer()
+
+    filtered = pipeline_filters(df, "revenue")
+
+    if filtered.empty:
+        st.warning(
+            "Select at least one market and pipeline stage "
+            "to display the analysis."
+        )
+        footer()
+        return
+
+    active = filtered[
+        filtered["stage"] != "Won"
+    ].copy()
+
+    total_pipeline = filtered["deal_value"].sum()
+    weighted_pipeline = filtered["weighted_value"].sum()
+
+    active_opportunities = len(active)
+
+    late_stage = filtered[
+        filtered["stage"].isin(
+            ["Proposal", "Negotiation"]
+        )
+    ]
+
+    late_stage_value = late_stage["deal_value"].sum()
+
+    stalled = active[
+        active["days_in_stage"] >= 30
+    ].copy()
+
+    stalled_weighted = stalled["weighted_value"].sum()
+
+    st.subheader("Pipeline Snapshot")
+
+    c1, c2, c3, c4 = st.columns(4)
+
+    c1.metric(
+        "Total Pipeline",
+        euro_m(total_pipeline)
+    )
+
+    c2.metric(
+        "Weighted Pipeline",
+        euro_m(weighted_pipeline)
+    )
+
+    c3.metric(
+        "Active Opportunities",
+        f"{active_opportunities}"
+    )
+
+    c4.metric(
+        "Proposal + Negotiation",
+        euro_m(late_stage_value)
+    )
+
+    # --------------------------------------------------
+    # PIPELINE STRUCTURE
+    # --------------------------------------------------
+
+    st.divider()
+    st.subheader("Pipeline Structure")
+
+    stage_summary = (
+        filtered
+        .groupby("stage", as_index=False)
+        .agg(
+            opportunities=("opportunity", "count"),
+            pipeline_value=("deal_value", "sum"),
+            weighted_value=("weighted_value", "sum"),
+            avg_days_in_stage=("days_in_stage", "mean")
+        )
+    )
+
+    stage_summary["stage"] = pd.Categorical(
+        stage_summary["stage"],
+        categories=STAGE_ORDER,
+        ordered=True
+    )
+
+    stage_summary = stage_summary.sort_values("stage")
+
+    left, right = st.columns(2)
+
+    with left:
+
+        st.markdown("#### Pipeline Value by Stage")
+
+        fig_stage_value = px.bar(
+            stage_summary,
+            x="stage",
+            y="pipeline_value",
+            category_orders={"stage": STAGE_ORDER},
+            labels={
+                "stage": "Pipeline Stage",
+                "pipeline_value": "Pipeline Value (€)"
+            }
+        )
+
+        fig_stage_value.update_traces(
+            marker_color=SOFT_ORANGE
+        )
+
+        style_chart(fig_stage_value)
+
+        st.plotly_chart(
+            fig_stage_value,
+            use_container_width=True
+        )
+
+    with right:
+
+        st.markdown("#### Weighted Value by Stage")
+
+        fig_weighted = px.bar(
+            stage_summary,
+            x="stage",
+            y="weighted_value",
+            category_orders={"stage": STAGE_ORDER},
+            labels={
+                "stage": "Pipeline Stage",
+                "weighted_value": "Weighted Value (€)"
+            }
+        )
+
+        fig_weighted.update_traces(
+            marker_color=MUTED_ORANGE
+        )
+
+        style_chart(fig_weighted)
+
+        st.plotly_chart(
+            fig_weighted,
+            use_container_width=True
+        )
+
+    # --------------------------------------------------
+    # STAGE AGEING
+    # --------------------------------------------------
+
+    st.divider()
+    st.subheader("Stage Ageing")
+
+    st.caption(
+        "Average days currently spent in each stage. "
+        "This is a snapshot of pipeline ageing, not a historical sales-cycle metric."
+    )
+
+    ageing = (
+        active
+        .groupby("stage", as_index=False)
+        .agg(
+            avg_days=("days_in_stage", "mean"),
+            max_days=("days_in_stage", "max"),
+            opportunities=("opportunity", "count")
+        )
+    )
+
+    ageing["stage"] = pd.Categorical(
+        ageing["stage"],
+        categories=STAGE_ORDER,
+        ordered=True
+    )
+
+    ageing = ageing.sort_values("stage")
+
+    fig_ageing = px.bar(
+        ageing,
+        x="stage",
+        y="avg_days",
+        category_orders={"stage": STAGE_ORDER},
+        labels={
+            "stage": "Pipeline Stage",
+            "avg_days": "Average Days in Stage"
+        }
+    )
+
+    fig_ageing.update_traces(
+        marker_color=SOFT_ORANGE
+    )
+
+    style_chart(fig_ageing)
+
+    st.plotly_chart(
+        fig_ageing,
+        use_container_width=True
+    )
+
+    # --------------------------------------------------
+    # PIPELINE RISK
+    # --------------------------------------------------
+
+    st.divider()
+    st.subheader("Pipeline Risk & Attention")
+
+    r1, r2, r3 = st.columns(3)
+
+    r1.metric(
+        "Stalled Opportunities",
+        f"{len(stalled)}"
+    )
+
+    r2.metric(
+        "Weighted Value at Attention",
+        euro_k(stalled_weighted)
+    )
+
+    if weighted_pipeline > 0:
+        stalled_share = (
+            stalled_weighted
+            / weighted_pipeline
+            * 100
+        )
+    else:
+        stalled_share = 0
+
+    r3.metric(
+        "Share of Weighted Pipeline",
+        f"{stalled_share:.1f}%"
+    )
+
+    if not stalled.empty:
+
+        attention = stalled[
+            [
+                "opportunity",
+                "market",
+                "stage",
+                "deal_value",
+                "weighted_value",
+                "days_in_stage"
+            ]
+        ].copy()
+
+        attention = attention.sort_values(
+            "weighted_value",
+            ascending=False
+        )
+
+        attention.columns = [
+            "Opportunity",
+            "Market",
+            "Stage",
+            "Deal Value (€)",
+            "Weighted Value (€)",
+            "Days in Stage"
+        ]
+
+        st.dataframe(
+            attention,
+            use_container_width=True,
+            hide_index=True
+        )
+
+    else:
+        st.success(
+            "No active opportunities currently exceed "
+            "the 30-day attention threshold."
+        )
+
+    # --------------------------------------------------
+    # CONCENTRATION
+    # --------------------------------------------------
+
+    st.divider()
+    st.subheader("Concentration Risk")
+
+    market_concentration = (
+        active
+        .groupby("market", as_index=False)["weighted_value"]
+        .sum()
+        .sort_values("weighted_value", ascending=False)
+    )
+
+    if not market_concentration.empty:
+
+        total_active_weighted = (
+            market_concentration["weighted_value"].sum()
+        )
+
+        top_market = market_concentration.iloc[0]["market"]
+        top_market_value = market_concentration.iloc[0]["weighted_value"]
+
+        if total_active_weighted > 0:
+            top_market_share = (
+                top_market_value
+                / total_active_weighted
+                * 100
+            )
+        else:
+            top_market_share = 0
+
+        largest_deal = active.sort_values(
+            "weighted_value",
+            ascending=False
+        ).iloc[0]
+
+        largest_deal_share = (
+            largest_deal["weighted_value"]
+            / total_active_weighted
+            * 100
+            if total_active_weighted > 0
+            else 0
+        )
+
+        c1, c2 = st.columns(2)
+
+        c1.metric(
+            "Largest Market Exposure",
+            f"{top_market_share:.1f}%",
+            top_market
+        )
+
+        c2.metric(
+            "Largest Deal Exposure",
+            f"{largest_deal_share:.1f}%",
+            largest_deal["opportunity"]
+        )
+
+        fig_concentration = px.bar(
+            market_concentration,
+            x="market",
+            y="weighted_value",
+            labels={
+                "market": "Market",
+                "weighted_value": "Weighted Pipeline (€)"
+            }
+        )
+
+        fig_concentration.update_traces(
+            marker_color=MUTED_ORANGE
+        )
+
+        style_chart(fig_concentration)
+
+        st.plotly_chart(
+            fig_concentration,
+            use_container_width=True
+        )
+
+    # --------------------------------------------------
+    # QUARTER VIEW
+    # --------------------------------------------------
+
+    st.divider()
+    st.subheader("Pipeline by Commercial Quarter")
+
+    quarter_summary = (
+        filtered
+        .groupby("quarter", as_index=False)
+        .agg(
+            pipeline_value=("deal_value", "sum"),
+            weighted_value=("weighted_value", "sum"),
+            opportunities=("opportunity", "count")
+        )
+    )
+
+    st.dataframe(
+        quarter_summary.rename(
+            columns={
+                "quarter": "Quarter",
+                "pipeline_value": "Pipeline Value (€)",
+                "weighted_value": "Weighted Value (€)",
+                "opportunities": "Opportunities"
+            }
+        ),
+        use_container_width=True,
+        hide_index=True
+    )
+
+    # --------------------------------------------------
+    # CCO DECISION SUPPORT
+    # --------------------------------------------------
+
+    st.divider()
+    st.subheader("CCO Decision Support")
+
+    if not stalled.empty:
+
+        highest_risk = stalled.sort_values(
+            "weighted_value",
+            ascending=False
+        ).iloc[0]
+
+        st.markdown(
+            f"""
+### Commercial signal
+
+**{len(stalled)} active opportunities** are currently above the
+30-day attention threshold, representing **{euro_k(stalled_weighted)}**
+in weighted pipeline.
+
+The largest weighted exposure among these opportunities is
+**{highest_risk["opportunity"]}** in **{highest_risk["market"]}**,
+currently at the **{highest_risk["stage"]}** stage.
+
+### Recommended CCO action
+
+Prioritize the stalled late-stage opportunities by weighted value rather
+than treating every open opportunity equally.
+
+For the next pipeline review:
+
+- validate the probability assigned to each material opportunity;
+- identify the commercial, technical, or customer-side blocker;
+- assign one accountable owner;
+- define the next customer action and expected timing;
+- remove or reweight opportunities that no longer support the forecast.
+"""
+        )
+
+    else:
+
+        st.markdown(
+            """
+### Commercial signal
+
+No active opportunity currently exceeds the 30-day attention threshold.
+
+### Recommended CCO action
+
+Maintain stage-ageing discipline and focus the pipeline review on the
+largest weighted opportunities and upcoming commercial milestones.
+"""
+        )
+
+    st.info(
+        "Analytical note: conversion rates and historical sales-cycle "
+        "velocity are intentionally not calculated because the synthetic "
+        "dataset represents a current pipeline snapshot rather than "
+        "historical opportunity movements."
+    )
+
+    footer()
 
 
-st.caption(
-    "Independent Strategy & Operations case study • "
-    "Synthetic dataset • Built by Xilene Siquero"
-)
+# ==================================================
+# PLACEHOLDER PAGES
+# ==================================================
+
+def market_expansion():
+
+    page_header(
+        "Market Expansion",
+        "Market prioritization • Commercial opportunity • Strategic trade-offs"
+    )
+
+    st.info(
+        "Market Expansion analysis will be developed in Step 7."
+    )
+
+    footer()
+
+
+def scenario_analysis():
+
+    page_header(
+        "Scenario Analysis",
+        "Downside • Base case • Upside • Revenue sensitivity"
+    )
+
+    st.info(
+        "Scenario Analysis will be developed in Step 8."
+    )
+
+    footer()
+
+
+def board_brief():
+
+    page_header(
+        "Board Brief",
+        "Executive KPIs • Commercial developments • Risks • Decisions required"
+    )
+
+    st.info(
+        "Board-ready reporting will be developed in Step 9."
+    )
+
+    footer()
+
+
+def about_case():
+
+    page_header(
+        "About This Case",
+        "Background • Transferable experience • Analytical approach"
+    )
+
+    st.info(
+        "The case-study narrative will be developed in Step 10."
+    )
+
+    footer()
+
+
+# ==================================================
+# PAGE ROUTER
+# ==================================================
+
+if page == "Executive Overview":
+    executive_overview()
+
+elif page == "Revenue & Pipeline":
+    revenue_pipeline()
+
+elif page == "Market Expansion":
+    market_expansion()
+
+elif page == "Scenario Analysis":
+    scenario_analysis()
+
+elif page == "Board Brief":
+    board_brief()
+
+elif page == "About This Case":
+    about_case()
