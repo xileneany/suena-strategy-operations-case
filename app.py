@@ -365,25 +365,26 @@ with right:
             "deal_value": "Pipeline Value (€)"
         }
     )
-fig_stage.update_traces(
+    fig_stage.update_traces(
     marker_color=MUTED_ORANGE
 )
 
-fig_stage.update_layout(
-    paper_bgcolor=CHARCOAL,
-    plot_bgcolor=CHARCOAL,
-    font_color=OFF_WHITE,
-    showlegend=False,
-    margin=dict(l=20, r=20, t=20, b=20),
-    xaxis=dict(
-        showgrid=False,
-        linecolor=BORDER
-    ),
-    yaxis=dict(
-        gridcolor=BORDER,
-        zeroline=False
+    fig_stage.update_layout(
+        paper_bgcolor=CHARCOAL,
+        plot_bgcolor=CHARCOAL,
+        font_color=OFF_WHITE,
+        showlegend=False,
+        margin=dict(l=20, r=20, t=20, b=20),
+        xaxis=dict(
+            showgrid=False,
+            linecolor=BORDER
+        ),
+        yaxis=dict(
+            gridcolor=BORDER,
+            zeroline=False
+        )
     )
-)
+    
     st.plotly_chart(
         fig_stage,
         use_container_width=True
