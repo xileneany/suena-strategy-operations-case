@@ -134,6 +134,13 @@ def load_data():
 
 df = load_data()
 
+@st.cache_data
+def load_market_data():
+    market_df = pd.read_csv("data/market_expansion.csv")
+    return market_df
+
+
+market_df = load_market_data()
 
 # ==================================================
 # HELPERS
@@ -983,12 +990,457 @@ def market_expansion():
 
     page_header(
         "Market Expansion",
-        "Market prioritization • Commercial opportunity • Strategic trade-offs"
+        "Market prioritization • Strategic trade-offs • Resource allocation"
     )
 
-    st.info(
-        "Market Expansion analysis will be developed in Step 7."
+    case_disclaimer()
+
+    st.markdown(
+        """
+This framework explores a management question:
+
+**If commercial resources are limited, which market should receive the next
+increment of expansion effort?**
+"""
     )
+
+    st.caption(
+        "Market scores are illustrative strategic assumptions on a 1–10 scale. "
+        "They are not estimates of suena energy's actual market position or "
+        "internal expansion priorities."
+    )
+
+    # --------------------------------------------------
+    # WEIGHT CONTROLS
+    # --------------------------------------------------
+
+    st.divider()
+    st.subheader("Strategic Assumptions")
+
+    st.markdown(
+        """
+Adjust the relative importance of each criterion. The model automatically
+normalizes the selected weights to 100%.
+"""
+    )
+
+    w1, w2, w3, w4, w5 = st.columns(5)
+
+    with w1:
+        opportunity_weight = st.slider(
+            "Market Opportunity",
+            min_value=0,
+            max_value=50,
+            value=30,
+            step=5
+        )
+
+    with w2:
+        revenue_weight = st.slider(
+            "Revenue Potential",
+            min_value=0,
+            max_value=50,
+            value=25,
+            step=5
+        )
+
+    with w3:
+        accessibility_weight = st.slider(
+            "Market Accessibility",
+            min_value=0,
+            max_value=50,
+            value=20,
+            step=5
+        )
+
+    with w4:
+        competition_weight = st.slider(
+            "Competitive Position",
+            min_value=0,
+            max_value=50,
+            value=15,
+            step=5
+        )
+
+    with w5:
+        execution_weight = st.slider(
+            "Execution Simplicity",
+            min_value=0,
+            max_value=50,
+            value=10,
+            step=5
+        )
+
+    raw_total = (
+        opportunity_weight
+        + revenue_weight
+        + accessibility_weight
+        + competition_weight
+        + execution_weight
+    )
+
+    if raw_total == 0:
+        st.warning(
+            "At least one criterion must have a weight greater than zero."
+        )
+        footer()
+        return
+
+    weights = {
+        "market_opportunity": opportunity_weight / raw_total,
+        "revenue_potential": revenue_weight / raw_total,
+        "market_accessibility": accessibility_weight / raw_total,
+        "competitive_position": competition_weight / raw_total,
+        "execution_simplicity": execution_weight / raw_total
+    }
+
+    st.caption(
+        f"Selected weights: {raw_total}% before normalization • "
+        "Normalized automatically to 100% for scoring."
+    )
+
+    # --------------------------------------------------
+    # PRIORITY SCORE
+    # --------------------------------------------------
+
+    scored = market_df.copy()
+
+    scored["priority_score"] = (
+        scored["market_opportunity"] * weights["market_opportunity"]
+        + scored["revenue_potential"] * weights["revenue_potential"]
+        + scored["market_accessibility"] * weights["market_accessibility"]
+        + scored["competitive_position"] * weights["competitive_position"]
+        + scored["execution_simplicity"] * weights["execution_simplicity"]
+    )
+
+    scored = scored.sort_values(
+        "priority_score",
+        ascending=False
+    ).reset_index(drop=True)
+
+    scored["rank"] = scored.index + 1
+
+    # --------------------------------------------------
+    # PRIORITIZATION
+    # --------------------------------------------------
+
+    st.divider()
+    st.subheader("Market Prioritization")
+
+    top_market = scored.iloc[0]
+    second_market = scored.iloc[1]
+
+    c1, c2, c3 = st.columns(3)
+
+    c1.metric(
+        "Priority Market",
+        top_market["market"],
+        f"{top_market['priority_score']:.2f} / 10"
+    )
+
+    c2.metric(
+        "Second Priority",
+        second_market["market"],
+        f"{second_market['priority_score']:.2f} / 10"
+    )
+
+    score_gap = (
+        top_market["priority_score"]
+        - second_market["priority_score"]
+    )
+
+    c3.metric(
+        "Top-Two Score Gap",
+        f"{score_gap:.2f}",
+        "priority points"
+    )
+
+    # --------------------------------------------------
+    # PRIORITY CHART
+    # --------------------------------------------------
+
+    fig_priority = px.bar(
+        scored.sort_values("priority_score"),
+        x="priority_score",
+        y="market",
+        orientation="h",
+        text="priority_score",
+        labels={
+            "priority_score": "Priority Score",
+            "market": "Market"
+        }
+    )
+
+    fig_priority.update_traces(
+        marker_color=SOFT_ORANGE,
+        texttemplate="%{text:.2f}",
+        textposition="outside"
+    )
+
+    fig_priority.update_layout(
+        paper_bgcolor=CHARCOAL,
+        plot_bgcolor=CHARCOAL,
+        font_color=OFF_WHITE,
+        showlegend=False,
+        margin=dict(
+            l=20,
+            r=60,
+            t=20,
+            b=20
+        ),
+        xaxis=dict(
+            range=[0, 10],
+            gridcolor=BORDER,
+            zeroline=False
+        ),
+        yaxis=dict(
+            showgrid=False
+        )
+    )
+
+    st.plotly_chart(
+        fig_priority,
+        use_container_width=True
+    )
+
+    # --------------------------------------------------
+    # SCORECARD
+    # --------------------------------------------------
+
+    st.subheader("Market Scorecard")
+
+    scorecard = scored[
+        [
+            "rank",
+            "market",
+            "market_opportunity",
+            "revenue_potential",
+            "market_accessibility",
+            "competitive_position",
+            "execution_simplicity",
+            "priority_score"
+        ]
+    ].copy()
+
+    scorecard.columns = [
+        "Rank",
+        "Market",
+        "Market Opportunity",
+        "Revenue Potential",
+        "Market Accessibility",
+        "Competitive Position",
+        "Execution Simplicity",
+        "Priority Score"
+    ]
+
+    scorecard["Priority Score"] = (
+        scorecard["Priority Score"].round(2)
+    )
+
+    st.dataframe(
+        scorecard,
+        use_container_width=True,
+        hide_index=True
+    )
+
+    # --------------------------------------------------
+    # PIPELINE ALIGNMENT
+    # --------------------------------------------------
+
+    st.divider()
+    st.subheader("Strategy vs. Current Pipeline")
+
+    st.caption(
+        "This view combines the illustrative prioritization framework with "
+        "the synthetic commercial pipeline to test whether current commercial "
+        "exposure is aligned with the selected strategic priorities."
+    )
+
+    pipeline_market = (
+        df[df["stage"] != "Won"]
+        .groupby("market", as_index=False)
+        .agg(
+            active_pipeline=("deal_value", "sum"),
+            weighted_pipeline=("weighted_value", "sum"),
+            opportunities=("opportunity", "count")
+        )
+    )
+
+    alignment = scored.merge(
+        pipeline_market,
+        on="market",
+        how="left"
+    )
+
+    alignment[
+        [
+            "active_pipeline",
+            "weighted_pipeline",
+            "opportunities"
+        ]
+    ] = alignment[
+        [
+            "active_pipeline",
+            "weighted_pipeline",
+            "opportunities"
+        ]
+    ].fillna(0)
+
+    total_active_pipeline = alignment["active_pipeline"].sum()
+
+    if total_active_pipeline > 0:
+        alignment["pipeline_share"] = (
+            alignment["active_pipeline"]
+            / total_active_pipeline
+            * 100
+        )
+    else:
+        alignment["pipeline_share"] = 0
+
+    alignment_display = alignment[
+        [
+            "market",
+            "priority_score",
+            "active_pipeline",
+            "weighted_pipeline",
+            "pipeline_share",
+            "opportunities"
+        ]
+    ].copy()
+
+    alignment_display.columns = [
+        "Market",
+        "Priority Score",
+        "Active Pipeline (€)",
+        "Weighted Pipeline (€)",
+        "Pipeline Share (%)",
+        "Active Opportunities"
+    ]
+
+    alignment_display["Priority Score"] = (
+        alignment_display["Priority Score"].round(2)
+    )
+
+    alignment_display["Pipeline Share (%)"] = (
+        alignment_display["Pipeline Share (%)"].round(1)
+    )
+
+    st.dataframe(
+        alignment_display,
+        use_container_width=True,
+        hide_index=True
+    )
+
+    # --------------------------------------------------
+    # STRATEGIC INTERPRETATION
+    # --------------------------------------------------
+
+    st.divider()
+    st.subheader("Strategic Interpretation")
+
+    top_pipeline_market = (
+        alignment
+        .sort_values(
+            "active_pipeline",
+            ascending=False
+        )
+        .iloc[0]
+    )
+
+    same_market = (
+        top_market["market"]
+        == top_pipeline_market["market"]
+    )
+
+    if same_market:
+
+        alignment_message = (
+            f"The highest-priority market, **{top_market['market']}**, "
+            "also has the largest active pipeline in the synthetic dataset. "
+            "Under the current assumptions, commercial exposure and strategic "
+            "priority are directionally aligned."
+        )
+
+    else:
+
+        alignment_message = (
+            f"The model currently ranks **{top_market['market']}** first, "
+            f"while **{top_pipeline_market['market']}** has the largest active "
+            "pipeline. This creates a resource-allocation question: whether to "
+            "reinforce the strongest existing pipeline or increase effort in "
+            "the market with the higher strategic score."
+        )
+
+    st.markdown(alignment_message)
+
+    if score_gap < 0.5:
+
+        st.warning(
+            "The top-two markets are closely ranked. The recommendation is "
+            "therefore sensitive to assumptions and should not be treated "
+            "as a high-confidence market-selection decision."
+        )
+
+    else:
+
+        st.info(
+            "The current scoring model shows a clearer separation between "
+            "the first- and second-ranked markets, although the result still "
+            "depends on the illustrative assumptions."
+        )
+
+    # --------------------------------------------------
+    # MANAGEMENT RECOMMENDATION
+    # --------------------------------------------------
+
+    st.subheader("Management Recommendation")
+
+    st.markdown(
+        f"""
+Under the current weighting assumptions, **{top_market["market"]}** should
+receive the next increment of expansion attention.
+
+This does **not** imply an all-in market-entry decision. A more disciplined
+next step would be to validate the assumptions driving the score before
+committing additional commercial resources.
+
+**Recommended validation questions**
+
+- Is the addressable commercial opportunity materially larger than in the
+  alternative markets?
+- Does the current pipeline provide enough evidence of customer demand?
+- What regulatory, technical, or partnership dependencies could slow execution?
+- Is the commercial team positioned to convert additional market attention
+  into qualified opportunities?
+- Would reallocating resources create material risk in an already-strong market?
+"""
+    )
+
+    # --------------------------------------------------
+    # METHODOLOGY
+    # --------------------------------------------------
+
+    with st.expander("Methodology & limitations"):
+
+        st.markdown(
+            """
+**Scoring methodology**
+
+Each market receives an illustrative score from 1 to 10 across five criteria.
+The user-selected weights are normalized to 100%, and the priority score is
+calculated as a weighted average.
+
+**Important limitation**
+
+The market scores are assumptions created for this portfolio case. They are
+not based on suena energy's internal strategy, confidential market research,
+or proprietary commercial information.
+
+The purpose of the model is to demonstrate a transparent decision framework:
+how assumptions can be structured, challenged, reweighted, and connected to
+commercial pipeline information before a management decision is made.
+"""
+        )
 
     footer()
 
