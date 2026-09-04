@@ -1,3 +1,13 @@
 opportunity,market,technology,stage,deal_value,probability,mw,days_in_stage,quarter
 BESS Alpha,Germany,BESS,Negotiation,420000,0.75,50,18,Q4
-...
+Storage Beta,Netherlands,BESS,Proposal,610000,0.50,80,42,Q4
+Solar Storage C,United Kingdom,Solar + Storage,Technical Evaluation,280000,0.30,35,21,Q4
+Battery Delta,Germany,BESS,Proposal,520000,0.50,65,27,Q4
+Storage Echo,Spain,BESS,Qualified,190000,0.20,30,16,Q1
+Battery Flex,Germany,BESS,Won,350000,1.00,45,10,Q4
+Renewable Grid G,Netherlands,Renewables,Technical Evaluation,240000,0.30,25,38,Q4
+Storage Horizon,United Kingdom,BESS,Negotiation,680000,0.75,90,24,Q4
+Battery Ion,Germany,BESS,Qualified,210000,0.20,30,12,Q1
+Storage Jupiter,Spain,BESS,Proposal,390000,0.50,55,31,Q1
+Grid Kappa,Netherlands,BESS,Negotiation,470000,0.75,60,19,Q4
+Battery Lambda,Germany,BESS,Technical Evaluation,310000,0.30,40,35,Q4
