@@ -12,6 +12,106 @@ st.set_page_config(
     layout="wide"
 )
 
+# --------------------------------------------------
+# VISUAL THEME
+# --------------------------------------------------
+
+CHARCOAL = "#101214"
+GRAPHITE = "#1A1D21"
+SOFT_ORANGE = "#E6A15A"
+MUTED_ORANGE = "#B9793E"
+OFF_WHITE = "#F2F2F0"
+MUTED_TEXT = "#A9ADB3"
+BORDER = "#30343A"
+
+st.markdown(
+    f"""
+    <style>
+
+    /* Main application */
+    .stApp {{
+        background-color: {CHARCOAL};
+        color: {OFF_WHITE};
+    }}
+
+    /* Main content width */
+    .block-container {{
+        padding-top: 2.5rem;
+        padding-bottom: 4rem;
+        max-width: 1450px;
+    }}
+
+    /* Sidebar */
+    [data-testid="stSidebar"] {{
+        background-color: {GRAPHITE};
+        border-right: 1px solid {BORDER};
+    }}
+
+    [data-testid="stSidebar"] * {{
+        color: {OFF_WHITE};
+    }}
+
+    /* Main headings */
+    h1 {{
+        color: {OFF_WHITE} !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.03em;
+    }}
+
+    h2 {{
+        color: {OFF_WHITE} !important;
+        font-weight: 650 !important;
+        letter-spacing: -0.02em;
+    }}
+
+    h3 {{
+        color: {SOFT_ORANGE} !important;
+    }}
+
+    /* Metric values */
+    [data-testid="stMetricValue"] {{
+        color: {OFF_WHITE};
+        font-weight: 600;
+    }}
+
+    /* Metric labels */
+    [data-testid="stMetricLabel"] {{
+        color: {MUTED_TEXT};
+    }}
+
+    /* Dividers */
+    hr {{
+        border-color: {BORDER} !important;
+    }}
+
+    /* Info box */
+    [data-testid="stAlert"] {{
+        background-color: {GRAPHITE};
+        border: 1px solid {BORDER};
+        border-left: 4px solid {SOFT_ORANGE};
+        color: {OFF_WHITE};
+    }}
+
+    /* Dataframe */
+    [data-testid="stDataFrame"] {{
+        border: 1px solid {BORDER};
+        border-radius: 8px;
+    }}
+
+    /* Captions */
+    .stCaption {{
+        color: {MUTED_TEXT} !important;
+    }}
+
+    /* Links */
+    a {{
+        color: {SOFT_ORANGE} !important;
+    }}
+
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 # --------------------------------------------------
 # LOAD DATA
@@ -31,17 +131,49 @@ df = load_data()
 # HEADER
 # --------------------------------------------------
 
-st.title("⚡ CCO Strategy & Operations Dashboard")
+st.title("CCO Strategy & Operations Dashboard")
+
+st.markdown(
+    f"""
+    <div style="
+        width: 75px;
+        height: 4px;
+        background-color: {SOFT_ORANGE};
+        border-radius: 4px;
+        margin-top: -12px;
+        margin-bottom: 22px;
+    "></div>
+    """,
+    unsafe_allow_html=True
+)
 
 st.caption(
     "Independent case study for suena energy | "
     "Revenue Operations • Commercial Insights • Decision Support"
 )
 
-st.info(
-    "All commercial figures in this application are synthetic and used solely "
-    "to demonstrate analytical and decision-support capabilities. "
-    "No internal suena energy data is used."
+st.markdown(
+    f"""
+    <div style="
+        background-color: {GRAPHITE};
+        border: 1px solid {BORDER};
+        border-left: 4px solid {SOFT_ORANGE};
+        padding: 14px 18px;
+        border-radius: 7px;
+        color: {MUTED_TEXT};
+        font-size: 0.9rem;
+        margin: 18px 0 30px 0;
+    ">
+        <strong style="color:{OFF_WHITE};">
+            Independent case study
+        </strong>
+        &nbsp;•&nbsp;
+        All commercial figures are synthetic and used solely to demonstrate
+        analytical and decision-support capabilities. No internal suena energy
+        data is used.
+    </div>
+    """,
+    unsafe_allow_html=True
 )
 
 
@@ -190,6 +322,25 @@ with left:
         }
     )
 
+fig_market.update_traces(
+    marker_color=SOFT_ORANGE
+)
+
+fig_market.update_layout(
+    paper_bgcolor=CHARCOAL,
+    plot_bgcolor=CHARCOAL,
+    font_color=OFF_WHITE,
+    showlegend=False,
+    margin=dict(l=20, r=20, t=20, b=20),
+    xaxis=dict(
+        showgrid=False,
+        linecolor=BORDER
+    ),
+    yaxis=dict(
+        gridcolor=BORDER,
+        zeroline=False
+    )
+)
     st.plotly_chart(
         fig_market,
         use_container_width=True
@@ -214,7 +365,25 @@ with right:
             "deal_value": "Pipeline Value (€)"
         }
     )
+fig_stage.update_traces(
+    marker_color=MUTED_ORANGE
+)
 
+fig_stage.update_layout(
+    paper_bgcolor=CHARCOAL,
+    plot_bgcolor=CHARCOAL,
+    font_color=OFF_WHITE,
+    showlegend=False,
+    margin=dict(l=20, r=20, t=20, b=20),
+    xaxis=dict(
+        showgrid=False,
+        linecolor=BORDER
+    ),
+    yaxis=dict(
+        gridcolor=BORDER,
+        zeroline=False
+    )
+)
     st.plotly_chart(
         fig_stage,
         use_container_width=True
