@@ -2475,50 +2475,18 @@ def about_case():
     # --------------------------------------------------
 
     st.markdown(
-        f"""
-        <div style="
-            background-color: {GRAPHITE};
-            border: 1px solid {BORDER};
-            border-left: 4px solid {SOFT_ORANGE};
-            padding: 24px 26px;
-            border-radius: 8px;
-            margin: 20px 0 32px 0;
-        ">
-            <div style="
-                color: {SOFT_ORANGE};
-                font-weight: 700;
-                font-size: 0.85rem;
-                text-transform: uppercase;
-                letter-spacing: 0.08em;
-                margin-bottom: 12px;
-            ">
-                Why I built this
-            </div>
-
-            <div style="
-                color: {OFF_WHITE};
-                font-size: 1.12rem;
-                line-height: 1.7;
-            ">
-                My professional background is not in energy — yet.
-                I have worked in international commodity-market and commercial
-                environments, supporting price fixation, contracts, inventory
-                positions, customer operations, reporting, and cross-functional
-                execution.
-                <br><br>
-                Across those roles, I repeatedly found myself solving a similar
-                problem: turning fragmented commercial and operational
-                information into structured data, dashboards, priorities,
-                and actionable decisions.
-                <br><br>
-                I built this case study to explore how I would apply that
-                experience to the Strategy & Operations challenges of a
-                scaling energy-tech company.
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    f"""
+<div style="background-color:{GRAPHITE}; border:1px solid {BORDER}; border-left:4px solid {SOFT_ORANGE}; padding:24px 26px; border-radius:8px; margin:20px 0 32px 0;">
+<div style="color:{SOFT_ORANGE}; font-weight:700; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:12px;">WHY I BUILT THIS</div>
+<div style="color:{OFF_WHITE}; font-size:1.12rem; line-height:1.7;">
+My professional background is not in energy (yet). I have worked in international commodity-market and commercial environments, supporting price fixation, contracts, inventory positions, customer operations, reporting, and cross-functional execution.<br><br>
+Across those roles, I often found myself solving a similar problem which is taking commercial and operational information from different places and turning it into something people could actually work with data, dashboards, and next steps.<br><br>
+I built this case to see how I could bring that experience into the Strategy & Operations challenges of a growing energy-tech company.
+</div>
+</div>
+""",
+    unsafe_allow_html=True
+)
 
     # --------------------------------------------------
     # BACKGROUND
@@ -2540,8 +2508,6 @@ What it does provide is familiarity with environments where commercial
 decisions are connected to **market-driven pricing, contracts, operational
 execution, data quality, and timing**.
 
-Energy is a new industry context for me. The analytical and operational
-discipline behind many of these decisions is not.
 """
     )
 
@@ -2563,7 +2529,7 @@ discipline behind many of these decisions is not.
 My previous roles have involved coordinating commercial execution across
 customers, suppliers, sales teams, finance, operations, and technology.
 
-This taught me to look beyond individual tasks and understand how information,
+This taught me to understand how information,
 ownership, timing, and process design affect commercial outcomes.
 """
         )
@@ -2573,10 +2539,7 @@ ownership, timing, and process design affect commercial outcomes.
         st.markdown(
             """
 I have built and used dashboards and automated reporting to improve visibility
-into commercial and operational performance.
-
-For me, the value of a dashboard is not the visualization itself. It is whether
-it helps someone identify a problem, prioritize an action, or make a better
+and helping identify a problem, prioritize an action, or make a better
 decision.
 """
         )
@@ -2591,8 +2554,7 @@ Working with coffee commodities gave me practical exposure to price fixation,
 contracts, inventory requirements, international counterparties, and
 market-dependent commercial execution.
 
-I see this as a useful foundation for learning a new market context rather than
-as a substitute for energy-market expertise.
+I see this as a useful foundation for learning a new market context.
 """
         )
 
@@ -2663,7 +2625,7 @@ day one.
                     02 — Market Expansion
                 </div>
                 <div style="color:{MUTED_TEXT}; margin-top:8px; line-height:1.6;">
-                    Turning strategic assumptions into a transparent weighted
+                    Build a
                     prioritization model and connecting those priorities to
                     commercial pipeline exposure.
                 </div>
@@ -2688,7 +2650,7 @@ day one.
                 </div>
                 <div style="color:{MUTED_TEXT}; margin-top:8px; line-height:1.6;">
                     Testing commercial outcomes under changing assumptions and
-                    translating target gaps into potential pipeline requirements.
+                     identifying potential pipeline requirements.
                 </div>
             </div>
             """,
