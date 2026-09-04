@@ -2467,11 +2467,354 @@ def about_case():
 
     page_header(
         "About This Case",
-        "Background • Transferable experience • Analytical approach"
+        "Why I built it • Transferable experience • How I approach Strategy & Operations"
     )
 
-    st.info(
-        "The case-study narrative will be developed in Step 10."
+    # --------------------------------------------------
+    # INTRODUCTION
+    # --------------------------------------------------
+
+    st.markdown(
+        f"""
+        <div style="
+            background-color: {GRAPHITE};
+            border: 1px solid {BORDER};
+            border-left: 4px solid {SOFT_ORANGE};
+            padding: 24px 26px;
+            border-radius: 8px;
+            margin: 20px 0 32px 0;
+        ">
+            <div style="
+                color: {SOFT_ORANGE};
+                font-weight: 700;
+                font-size: 0.85rem;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                margin-bottom: 12px;
+            ">
+                Why I built this
+            </div>
+
+            <div style="
+                color: {OFF_WHITE};
+                font-size: 1.12rem;
+                line-height: 1.7;
+            ">
+                My professional background is not in energy — yet.
+                I have worked in international commodity-market and commercial
+                environments, supporting price fixation, contracts, inventory
+                positions, customer operations, reporting, and cross-functional
+                execution.
+                <br><br>
+                Across those roles, I repeatedly found myself solving a similar
+                problem: turning fragmented commercial and operational
+                information into structured data, dashboards, priorities,
+                and actionable decisions.
+                <br><br>
+                I built this case study to explore how I would apply that
+                experience to the Strategy & Operations challenges of a
+                scaling energy-tech company.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # --------------------------------------------------
+    # BACKGROUND
+    # --------------------------------------------------
+
+    st.subheader("From Commodity Markets to Energy Tech")
+
+    st.markdown(
+        """
+My experience includes commercial and operational work in international
+**coffee commodity markets**, where I supported activities including
+**price fixation, contract execution, inventory positions, supplier and
+customer coordination, and performance reporting**.
+
+That experience does not make me an energy trader, and this project is not
+intended to suggest otherwise.
+
+What it does provide is familiarity with environments where commercial
+decisions are connected to **market-driven pricing, contracts, operational
+execution, data quality, and timing**.
+
+Energy is a new industry context for me. The analytical and operational
+discipline behind many of these decisions is not.
+"""
+    )
+
+    # --------------------------------------------------
+    # TRANSFERABLE EXPERIENCE
+    # --------------------------------------------------
+
+    st.divider()
+    st.subheader("What I Bring")
+
+    c1, c2 = st.columns(2)
+
+    with c1:
+
+        st.markdown("### Commercial Operations")
+
+        st.markdown(
+            """
+My previous roles have involved coordinating commercial execution across
+customers, suppliers, sales teams, finance, operations, and technology.
+
+This taught me to look beyond individual tasks and understand how information,
+ownership, timing, and process design affect commercial outcomes.
+"""
+        )
+
+        st.markdown("### Data & Reporting")
+
+        st.markdown(
+            """
+I have built and used dashboards and automated reporting to improve visibility
+into commercial and operational performance.
+
+For me, the value of a dashboard is not the visualization itself. It is whether
+it helps someone identify a problem, prioritize an action, or make a better
+decision.
+"""
+        )
+
+    with c2:
+
+        st.markdown("### Commodity-Market Exposure")
+
+        st.markdown(
+            """
+Working with coffee commodities gave me practical exposure to price fixation,
+contracts, inventory requirements, international counterparties, and
+market-dependent commercial execution.
+
+I see this as a useful foundation for learning a new market context rather than
+as a substitute for energy-market expertise.
+"""
+        )
+
+        st.markdown("### Cross-Functional Execution")
+
+        st.markdown(
+            """
+Much of my work has happened between functions rather than inside a single
+functional silo.
+
+I am comfortable structuring ambiguous work, coordinating stakeholders,
+tracking dependencies, and translating operational detail into information
+that commercial teams can act on.
+"""
+        )
+
+    # --------------------------------------------------
+    # PROJECT CAPABILITIES
+    # --------------------------------------------------
+
+    st.divider()
+    st.subheader("What This Case Demonstrates")
+
+    st.markdown(
+        """
+Rather than creating a technical energy-trading simulation, I focused this
+case on the Strategy & Operations problems I could approach credibly from
+day one.
+"""
+    )
+
+    d1, d2 = st.columns(2)
+
+    with d1:
+
+        st.markdown(
+            f"""
+            <div style="
+                background-color: {GRAPHITE};
+                border: 1px solid {BORDER};
+                border-radius: 8px;
+                padding: 20px;
+                margin-bottom: 16px;
+            ">
+                <div style="color:{SOFT_ORANGE}; font-weight:700;">
+                    01 — Revenue Operations
+                </div>
+                <div style="color:{MUTED_TEXT}; margin-top:8px; line-height:1.6;">
+                    Structuring pipeline information, identifying stage ageing,
+                    weighted exposure, concentration risk, and commercial
+                    priorities.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        st.markdown(
+            f"""
+            <div style="
+                background-color: {GRAPHITE};
+                border: 1px solid {BORDER};
+                border-radius: 8px;
+                padding: 20px;
+                margin-bottom: 16px;
+            ">
+                <div style="color:{SOFT_ORANGE}; font-weight:700;">
+                    02 — Market Expansion
+                </div>
+                <div style="color:{MUTED_TEXT}; margin-top:8px; line-height:1.6;">
+                    Turning strategic assumptions into a transparent weighted
+                    prioritization model and connecting those priorities to
+                    commercial pipeline exposure.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    with d2:
+
+        st.markdown(
+            f"""
+            <div style="
+                background-color: {GRAPHITE};
+                border: 1px solid {BORDER};
+                border-radius: 8px;
+                padding: 20px;
+                margin-bottom: 16px;
+            ">
+                <div style="color:{SOFT_ORANGE}; font-weight:700;">
+                    03 — Scenario Analysis
+                </div>
+                <div style="color:{MUTED_TEXT}; margin-top:8px; line-height:1.6;">
+                    Testing commercial outcomes under changing assumptions and
+                    translating target gaps into potential pipeline requirements.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        st.markdown(
+            f"""
+            <div style="
+                background-color: {GRAPHITE};
+                border: 1px solid {BORDER};
+                border-radius: 8px;
+                padding: 20px;
+                margin-bottom: 16px;
+            ">
+                <div style="color:{SOFT_ORANGE}; font-weight:700;">
+                    04 — Executive Communication
+                </div>
+                <div style="color:{MUTED_TEXT}; margin-top:8px; line-height:1.6;">
+                    Reducing detailed analysis into management signals, risks,
+                    recommendations, and decisions suitable for an executive
+                    or board-level conversation.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    # --------------------------------------------------
+    # ANALYTICAL PRINCIPLES
+    # --------------------------------------------------
+
+    st.divider()
+    st.subheader("How I Approached the Analysis")
+
+    st.markdown(
+        """
+A few principles guided the project:
+
+**Be clear about what is assumed.**  
+Since I don't have access to suena's internal data, I used synthetic data where needed and kept those assumptions visible throughout the case.
+
+**Work with data.**  
+The pipeline data is useful for looking at value, stage ageing, concentration, and current commercial exposure. I avoided adding metrics that would require historical data I don't have.
+
+**Always ask: so what?**  
+Each section tries to connect the analysis to a question, an action, or a decision.
+
+**Keep the executive view simple.**  
+The Board Brief is intentionally shorter than the analytical sections. The idea is to bring forward the few things that actually need management attention.
+"""
+    )
+
+    # --------------------------------------------------
+    # HOW THE CASE IS STRUCTURED
+    # --------------------------------------------------
+
+    st.divider()
+    st.subheader("Case Structure")
+
+    case_structure = pd.DataFrame(
+        {
+            "View": [
+                "Executive Overview",
+                "Revenue & Pipeline",
+                "Market Expansion",
+                "Scenario Analysis",
+                "Board Brief"
+            ],
+            "Management Question": [
+                "What requires the CCO's attention?",
+                "Where is commercial value, risk, and pipeline friction?",
+                "Where should the next increment of expansion effort go?",
+                "How resilient is the commercial plan under changing assumptions?",
+                "What should management communicate and decide?"
+            ]
+        }
+    )
+
+    st.dataframe(
+        case_structure,
+        use_container_width=True,
+        hide_index=True
+    )
+
+    # --------------------------------------------------
+    # FINAL NOTE
+    # --------------------------------------------------
+
+    st.markdown(
+        f"""
+        <div style="
+            margin-top: 40px;
+            padding: 28px;
+            text-align: center;
+            border-top: 1px solid {BORDER};
+            border-bottom: 1px solid {BORDER};
+        ">
+
+            <div style="
+                color: {OFF_WHITE};
+                font-size: 1.25rem;
+                font-weight: 600;
+                margin-bottom: 10px;
+            ">
+                Built by Xilene Siquero
+            </div>
+
+            <div style="
+                color: {SOFT_ORANGE};
+                font-size: 1rem;
+                margin-bottom: 8px;
+            ">
+                Strategy & Operations Candidate
+            </div>
+
+            <div style="
+                color: {MUTED_TEXT};
+                font-size: 0.9rem;
+            ">
+                Hamburg • 2026
+            </div>
+
+        </div>
+        """,
+        unsafe_allow_html=True
     )
 
     footer()
