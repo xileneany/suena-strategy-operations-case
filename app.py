@@ -2065,12 +2065,400 @@ def board_brief():
 
     page_header(
         "Board Brief",
-        "Executive KPIs • Commercial developments • Risks • Decisions required"
+        "Commercial performance • Key developments • Risks • Decisions required"
     )
 
-    st.info(
-        "Board-ready reporting will be developed in Step 9."
+    case_disclaimer()
+
+    st.caption(
+        "Illustrative one-page management brief designed to translate "
+        "commercial pipeline data into board-level signals and decisions."
     )
+
+    # --------------------------------------------------
+    # COMMERCIAL BASELINE
+    # --------------------------------------------------
+
+    active = df[
+        df["stage"] != "Won"
+    ].copy()
+
+    won = df[
+        df["stage"] == "Won"
+    ].copy()
+
+    total_pipeline = active["deal_value"].sum()
+    weighted_pipeline = active["weighted_value"].sum()
+    active_opportunities = len(active)
+
+    late_stage = active[
+        active["stage"].isin(
+            ["Proposal", "Negotiation"]
+        )
+    ].copy()
+
+    late_stage_value = late_stage["deal_value"].sum()
+
+    stalled = active[
+        active["days_in_stage"] >= 30
+    ].copy()
+
+    stalled_weighted = stalled["weighted_value"].sum()
+
+    # --------------------------------------------------
+    # BOARD KPI STRIP
+    # --------------------------------------------------
+
+    st.divider()
+    st.subheader("Commercial Snapshot")
+
+    k1, k2, k3, k4 = st.columns(4)
+
+    k1.metric(
+        "Active Pipeline",
+        euro_m(total_pipeline)
+    )
+
+    k2.metric(
+        "Weighted Pipeline",
+        euro_m(weighted_pipeline)
+    )
+
+    k3.metric(
+        "Active Opportunities",
+        f"{active_opportunities}"
+    )
+
+    k4.metric(
+        "Late-Stage Pipeline",
+        euro_m(late_stage_value)
+    )
+
+    # --------------------------------------------------
+    # EXECUTIVE SUMMARY
+    # --------------------------------------------------
+
+    st.divider()
+    st.subheader("Executive Summary")
+
+    market_summary = (
+        active
+        .groupby("market", as_index=False)
+        .agg(
+            pipeline_value=("deal_value", "sum"),
+            weighted_value=("weighted_value", "sum"),
+            opportunities=("opportunity", "count")
+        )
+        .sort_values(
+            "pipeline_value",
+            ascending=False
+        )
+    )
+
+    top_market = market_summary.iloc[0]
+
+    largest_opportunity = (
+        active
+        .sort_values(
+            "weighted_value",
+            ascending=False
+        )
+        .iloc[0]
+    )
+
+    stalled_share = (
+        stalled_weighted
+        / weighted_pipeline
+        * 100
+        if weighted_pipeline > 0
+        else 0
+    )
+
+    st.markdown(
+        f"""
+The synthetic commercial pipeline currently contains
+**{euro_m(total_pipeline)} in active opportunity value**, representing
+**{euro_m(weighted_pipeline)} on a probability-weighted basis**.
+
+**{top_market["market"]}** is currently the largest market by active
+pipeline value, while **{largest_opportunity["opportunity"]}** represents
+the largest single weighted opportunity.
+
+Pipeline quality requires attention: **{len(stalled)} opportunities**
+have remained in their current stage for at least 30 days, representing
+**{euro_k(stalled_weighted)}**, or approximately
+**{stalled_share:.1f}% of weighted active pipeline**.
+"""
+    )
+
+    # --------------------------------------------------
+    # WHAT CHANGED / WHAT MATTERS
+    # --------------------------------------------------
+
+    st.divider()
+    st.subheader("What Matters")
+
+    left, right = st.columns(2)
+
+    with left:
+
+        st.markdown("### Commercial Strength")
+
+        st.markdown(
+            f"""
+- **{euro_m(late_stage_value)}** of active pipeline is currently in
+  Proposal or Negotiation.
+- **{top_market["market"]}** represents the largest current source of
+  commercial pipeline.
+- The pipeline spans **{active["market"].nunique()} markets** and
+  **{active["mw"].sum():,.0f} MW** of synthetic asset opportunities.
+"""
+        )
+
+    with right:
+
+        st.markdown("### Commercial Risk")
+
+        if not stalled.empty:
+
+            highest_stalled = (
+                stalled
+                .sort_values(
+                    "weighted_value",
+                    ascending=False
+                )
+                .iloc[0]
+            )
+
+            st.markdown(
+                f"""
+- **{len(stalled)} opportunities** exceed the 30-day stage-ageing threshold.
+- **{euro_k(stalled_weighted)}** of weighted pipeline is currently
+  associated with these opportunities.
+- The largest stalled weighted exposure is
+  **{highest_stalled["opportunity"]}** in
+  **{highest_stalled["market"]}**.
+"""
+            )
+
+        else:
+
+            st.markdown(
+                """
+- No active opportunities currently exceed the 30-day attention threshold.
+- Stage ageing does not currently represent a material synthetic pipeline signal.
+"""
+            )
+
+    # --------------------------------------------------
+    # MARKET EXPOSURE
+    # --------------------------------------------------
+
+    st.divider()
+    st.subheader("Market Exposure")
+
+    market_summary["pipeline_share"] = (
+        market_summary["pipeline_value"]
+        / total_pipeline
+        * 100
+        if total_pipeline > 0
+        else 0
+    )
+
+    fig_board_market = px.bar(
+        market_summary,
+        x="market",
+        y="weighted_value",
+        text="pipeline_share",
+        labels={
+            "market": "Market",
+            "weighted_value": "Weighted Pipeline (€)"
+        }
+    )
+
+    fig_board_market.update_traces(
+        marker_color=SOFT_ORANGE,
+        texttemplate="%{text:.1f}% gross pipeline share",
+        textposition="outside"
+    )
+
+    style_chart(
+        fig_board_market
+    )
+
+    st.plotly_chart(
+        fig_board_market,
+        use_container_width=True
+    )
+
+    # --------------------------------------------------
+    # KEY RISKS
+    # --------------------------------------------------
+
+    st.divider()
+    st.subheader("Key Risks")
+
+    top_market_share = (
+        top_market["pipeline_value"]
+        / total_pipeline
+        * 100
+        if total_pipeline > 0
+        else 0
+    )
+
+    largest_deal_share = (
+        largest_opportunity["weighted_value"]
+        / weighted_pipeline
+        * 100
+        if weighted_pipeline > 0
+        else 0
+    )
+
+    risk1, risk2, risk3 = st.columns(3)
+
+    risk1.metric(
+        "Stage-Ageing Exposure",
+        f"{stalled_share:.1f}%",
+        "of weighted pipeline"
+    )
+
+    risk2.metric(
+        "Largest Market Share",
+        f"{top_market_share:.1f}%",
+        top_market["market"]
+    )
+
+    risk3.metric(
+        "Largest Deal Exposure",
+        f"{largest_deal_share:.1f}%",
+        largest_opportunity["opportunity"]
+    )
+
+    # --------------------------------------------------
+    # BOARD DECISIONS
+    # --------------------------------------------------
+
+    st.divider()
+    st.subheader("Decisions Required")
+
+    st.markdown(
+        f"""
+### 1. Pipeline quality
+
+Should management continue to carry the current probabilities on opportunities
+that have remained in stage for 30+ days, or should selected opportunities be
+reweighted?
+
+**Why it matters:** {euro_k(stalled_weighted)} of weighted pipeline is
+currently associated with the stage-ageing attention group.
+
+### 2. Commercial resource allocation
+
+Should additional commercial effort reinforce **{top_market["market"]}**,
+where current pipeline exposure is strongest, or be directed toward markets
+with lower current pipeline concentration?
+
+**Why it matters:** resource allocation affects both near-term pipeline
+progression and longer-term market diversification.
+
+### 3. Forecast protection
+
+Is the current late-stage pipeline sufficient to support commercial
+expectations, or should management increase pipeline-generation activity as
+downside protection?
+
+**Why it matters:** Proposal and Negotiation currently represent
+{euro_m(late_stage_value)} of active gross pipeline.
+"""
+    )
+
+    # --------------------------------------------------
+    # MANAGEMENT ACTIONS
+    # --------------------------------------------------
+
+    st.divider()
+    st.subheader("Management Actions")
+
+    st.markdown(
+        """
+**Before the next board update:**
+
+1. Review all opportunities above the 30-day stage-ageing threshold.
+2. Validate probability and next-action assumptions on material late-stage deals.
+3. Confirm the commercial rationale for market-level resource allocation.
+4. Run downside and upside scenarios against the current commercial target.
+5. Escalate only the risks and decisions that require executive intervention.
+"""
+    )
+
+    # --------------------------------------------------
+    # BOARD NOTE
+    # --------------------------------------------------
+
+    st.markdown(
+        f"""
+        <div style="
+            background-color: {GRAPHITE};
+            border: 1px solid {BORDER};
+            border-left: 4px solid {SOFT_ORANGE};
+            padding: 20px 22px;
+            border-radius: 8px;
+            margin-top: 30px;
+            margin-bottom: 20px;
+        ">
+            <div style="
+                color: {SOFT_ORANGE};
+                font-weight: 700;
+                font-size: 0.9rem;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                margin-bottom: 10px;
+            ">
+                Board-level takeaway
+            </div>
+            <div style="
+                color: {OFF_WHITE};
+                font-size: 1.05rem;
+                line-height: 1.6;
+            ">
+                Commercial opportunity remains meaningful, but management
+                attention should focus on pipeline quality rather than gross
+                pipeline volume alone. Stage ageing, probability discipline,
+                concentration exposure, and market-level resource allocation
+                are the primary decision areas surfaced by this synthetic case.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # --------------------------------------------------
+    # METHODOLOGY
+    # --------------------------------------------------
+
+    with st.expander("Board brief methodology & limitations"):
+
+        st.markdown(
+            """
+This page intentionally prioritizes management signals.
+
+It uses the same synthetic pipeline dataset as the Revenue & Pipeline view,
+but reduces the information to:
+
+- headline commercial KPIs;
+- material developments;
+- concentration and stage-ageing risks;
+- management decisions;
+- immediate actions.
+
+It does not represent an actual suena energy board report. No internal company
+targets, financial information, board materials, or confidential commercial
+data are used.
+
+A real board report would also require information and targets that are not available
+in this independent case study.
+"""
+        )
 
     footer()
 
